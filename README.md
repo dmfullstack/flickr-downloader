@@ -19,6 +19,7 @@ This program is designed to download entire Flickr photo sets at a time.
 
 Size options = tiny|thumb|small|large|original
 
+mvn install
 mvn exec:java -DtargetDir=/home/mypics -DphotoSetId=72157617533326814 -DsizeCode=tiny -Dapikey=XXX
 
 

@@ -18,6 +18,8 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
@@ -31,6 +33,8 @@ import com.meterware.httpunit.WebResponse;
  */
 public class Downloader {
 
+	private static Logger log = null;
+	
     private WebConversation wc = new WebConversation();
     private SAXBuilder sb = new SAXBuilder();
     private String apikey = null;
@@ -90,8 +94,8 @@ public class Downloader {
             String fileName = imageName+".jpg";
             File outputFile = new File(outputDirectory,imageName+".jpg");
                         
-            System.out.println("Source : " + url);            
-            System.out.println("Target : " + outputFile.getAbsolutePath());
+            log.info("Source : " + url);            
+            log.info("Target : " + outputFile.getAbsolutePath());
             
             os = new BufferedOutputStream(new FileOutputStream(outputFile));
             int i=-1;
@@ -101,7 +105,7 @@ public class Downloader {
                 bytes++;
             }
             
-            System.out.println("Download complete [" + bytes + " bytes] \n");
+            log.info("Download complete [" + bytes + " bytes] \n");
             
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -123,9 +127,9 @@ public class Downloader {
         } else if ("original".equalsIgnoreCase(sizeString)) {
             return "o";                        
         } else {
-            System.out.println("Unrecognized image size code : " + sizeString);
-            System.out.println("Should be tiny | thumb | small | large | original");
-            System.out.println("Defaulting to medium");
+            log.info("Unrecognized image size code : " + sizeString);
+            log.info("Should be tiny | thumb | small | large | original");
+            log.info("Defaulting to medium");
             throw new Exception("Invalid image size code");
         }
     }
@@ -139,21 +143,23 @@ public class Downloader {
      */
     public static void main(String[] args) throws Exception {
 
+    	log = LoggerFactory.getLogger(Downloader.class);
+    	
         String targetDownloadDirectory = System.getProperty("targetDir");
         String photoSetId = System.getProperty("photoSetId");
         String sizeCodeString = System.getProperty("sizeCode");
         String apikey = System.getProperty("apikey");
         
-        System.out.println("targetDownloadDirectory = " + targetDownloadDirectory);
-        System.out.println("photoSetId = " + photoSetId);
-        System.out.println("sizeCodeString = " + sizeCodeString);
-        System.out.println("apikey = " + apikey);        
+        log.info("targetDownloadDirectory = " + targetDownloadDirectory);
+        log.info("photoSetId = " + photoSetId);
+        log.info("sizeCodeString = " + sizeCodeString);
+        log.info("apikey = " + apikey);        
         
         if (isBlank(targetDownloadDirectory) ||
         		isBlank(photoSetId) ||
         		isBlank(sizeCodeString) ||
         		isBlank(apikey)) {
-        	System.out.println("Usage : mvn exec:java -DtargetDir=<target dir> -DphotoSetId=<photoset id> -DsizeCode=<size code> -Dapikey=<apikey>");
+        	log.error("Usage : mvn exec:java -DtargetDir=<target dir> -DphotoSetId=<photoset id> -DsizeCode=<size code> -Dapikey=<apikey>");
         	System.exit(1);
         }
         
@@ -166,9 +172,9 @@ public class Downloader {
         Document photosetInfo = downloader.execute("flickr.photosets.getInfo", "photoset_id=" + photoSetId);
         String numPhotos = photosetInfo.getRootElement().getChild("photoset").getAttributeValue("photos");
         
-        System.out.println("******************************************");
-        System.out.println("Downloading a total of " + numPhotos + " photos.");
-        System.out.println("******************************************");
+        log.info("******************************************");
+        log.info("Downloading a total of " + numPhotos + " photos.");
+        log.info("******************************************");
         
         Document photoset = downloader.execute("flickr.photosets.getPhotos", "photoset_id=" + photoSetId);
         List photos = photoset.getRootElement().getChild("photoset").getChildren();
@@ -176,7 +182,7 @@ public class Downloader {
         int i=1;
         for (Iterator iter = photos.iterator(); iter.hasNext();) {
             Element photo = (Element) iter.next();
-            System.out.println("Photo #" + i++);
+            log.info("Photo #" + i++);
             
             String secret = photo.getAttributeValue("secret");
             
